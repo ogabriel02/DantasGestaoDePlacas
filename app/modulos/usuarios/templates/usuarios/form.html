@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, campo, seletor %}
+{% block titulo %}{{ 'Editar usuário' if editando else 'Novo usuário' }}{% endblock %}
+{% block conteudo %}
+{% call cabecalho('Editar usuário' if editando else 'Novo usuário', 'Os campos marcados com * são obrigatórios') %}
+  <a class="btn btn--sec" href="{{ url_for('usuarios.index') }}">Voltar</a>
+{% endcall %}
+<section class="cartao">
+  {% if erros %}<div class="aviso aviso--erro" role="alert">{{ erros.get('_geral') or 'Revise os campos destacados.' }}</div>{% endif %}
+  <form method="post" novalidate class="grade-form"
+        action="{{ url_for('usuarios.editar', usuario_id=usuario_id) if editando else url_for('usuarios.novo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ campo('nome', 'Nome completo', dados.get('nome'), erros, maxlength=120, autofocus=True) }}
+    {{ campo('login', 'Login', dados.get('login'), erros, maxlength=60, autocomplete='off', ajuda='Letras minúsculas, números, ponto, hífen ou sublinhado.') }}
+    {{ seletor('perfil', 'Perfil', [('FUNCIONARIO', 'Funcionário'), ('ADMINISTRADOR', 'Administrador')], dados.get('perfil'), erros,
+               desabilitado=proprio, ajuda='Você não pode alterar o seu próprio perfil.' if proprio else '') }}
+    <div class="col-6"></div>
+    {{ campo('senha', 'Nova senha' if editando else 'Senha', '', erros, tipo='password', obrigatorio=not editando, autocomplete='new-password', maxlength=128,
+             ajuda='Deixe em branco para manter a senha atual. Mínimo de 8 caracteres.' if editando else 'Mínimo de 8 caracteres.') }}
+    {{ campo('confirmar', 'Confirmar senha', '', erros, tipo='password', obrigatorio=not editando, autocomplete='new-password', maxlength=128) }}
+    <div class="col-12 acoes-form">
+      <button type="submit" class="btn btn--pri">Salvar</button>
+      <a class="btn btn--sec" href="{{ url_for('usuarios.index') }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

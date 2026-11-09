@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+<section class="cartao estado">
+  <p class="estado-codigo">{{ codigo }}</p>
+  <h1>{{ titulo }}</h1>
+  <p class="subtitulo">{{ mensagem }}</p>
+  <p><a class="btn btn--pri" href="{{ home_url }}">Voltar ao início</a></p>
+</section>
+{% endblock %}

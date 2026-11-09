@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block corpo %}
+<main class="login-pagina">
+  <section class="login-cartao" aria-labelledby="login-titulo">
+    <div class="login-marca">
+      <span class="marca-logo marca-logo--grande"><img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo Dantas Placas"></span>
+      <div>
+        <strong>Dantas Gestão de Placas</strong>
+        <small>DGP · Acesso restrito</small>
+      </div>
+    </div>
+    <h1 id="login-titulo">Entrar no sistema</h1>
+    <p class="subtitulo">Informe seu login e senha para continuar.</p>
+    {% include "_flash.html" %}
+    {% if erro %}<div class="aviso aviso--erro" role="alert">{{ erro }}</div>{% endif %}
+    <form method="post" action="{{ url_for('autenticacao.login') }}" class="login-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ destino }}">
+      <div class="campo">
+        <label for="login">Login</label>
+        <input id="login" name="login" type="text" autocomplete="username" maxlength="60" required autofocus>
+      </div>
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="current-password" maxlength="128" required>
+      </div>
+      <button class="btn btn--pri btn--bloco" type="submit">Entrar</button>
+    </form>
+    <p class="ajuda login-rodape">Esqueceu a senha? Procure um administrador do sistema.</p>
+  </section>
+</main>
+{% endblock %}

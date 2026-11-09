@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo, paginacao %}
+{% block titulo %}Clientes e despachantes{% endblock %}
+{% block conteudo %}
+{% call cabecalho("Clientes e despachantes", "Consulte e cadastre quem faz pedidos") %}
+  <a class="btn btn--pri" href="{{ url_for('clientes.novo') }}">+ Novo cadastro</a>
+{% endcall %}
+<section class="cartao">
+  <form method="get" class="filtros" role="search">
+    <div class="campo filtro-busca">
+      <label for="q">Buscar por nome ou CPF/CNPJ</label>
+      <input id="q" name="q" type="search" value="{{ busca }}" maxlength="80" placeholder="Digite para buscar">
+    </div>
+    <div class="campo">
+      <label for="categoria">Categoria</label>
+      <select id="categoria" name="categoria">
+        <option value="">Todas</option>
+        <option value="PARTICULAR"{% if categoria == 'PARTICULAR' %} selected{% endif %}>Particular</option>
+        <option value="DESPACHANTE"{% if categoria == 'DESPACHANTE' %} selected{% endif %}>Despachante</option>
+      </select>
+    </div>
+    <div class="filtros-acoes">
+      <button class="btn btn--pri" type="submit">Filtrar</button>
+      <a class="btn btn--sec" href="{{ url_for('clientes.index') }}">Limpar</a>
+    </div>
+  </form>
+</section>
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <thead>
+        <tr><th>Nome</th><th>Categoria</th><th>Documento</th><th>Telefone e local</th><th>Pedidos</th><th class="col-acoes">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+        <tr>
+          <td><strong>{{ c.nome }}</strong><span class="secundario">{{ c.email }}</span></td>
+          <td>{{ selo('Despachante', 'info') if c.categoria == 'DESPACHANTE' else selo('Particular', 'neutro') }}<span class="secundario">{{ 'Pessoa jurídica' if c.tipo_pessoa == 'PJ' else 'Pessoa física' }}</span></td>
+          <td class="nowrap">{{ c.documento|documento }}</td>
+          <td><span class="nowrap">{{ c.telefone|telefone }}</span><span class="secundario">{{ c.bairro }} · {{ c.cidade }}/{{ c.uf }}</span></td>
+          <td>{{ c.pedidos }}</td>
+          <td class="col-acoes">
+            <a class="btn btn--sec btn--sm" href="{{ url_for('clientes.ver', cliente_id=c.id) }}">Ver</a>
+            <a class="btn btn--sec btn--sm" href="{{ url_for('clientes.editar', cliente_id=c.id) }}">Editar</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="vazio">Nenhum cadastro encontrado. <a href="{{ url_for('clientes.novo') }}">Cadastrar agora</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rodape-tabela">
+    <span>{{ total }} cadastro{{ '' if total == 1 else 's' }}</span>
+    {{ paginacao(pagina, paginas, 'clientes.index', {'q': busca or None, 'categoria': categoria or None}) }}
+  </div>
+</section>
+{% endblock %}

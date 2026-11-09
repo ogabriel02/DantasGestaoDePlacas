@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo %}
+{% block titulo %}{{ c.nome }}{% endblock %}
+{% block conteudo %}
+{% call cabecalho(c.nome, 'Cadastro de cliente') %}
+  <a class="btn btn--sec" href="{{ url_for('clientes.index') }}">Voltar</a>
+  <a class="btn btn--pri" href="{{ url_for('clientes.editar', cliente_id=c.id) }}">Editar</a>
+{% endcall %}
+<section class="cartao">
+  <h2 class="secao-titulo">Identificação</h2>
+  <dl class="dados">
+    <div><dt>Tipo de pessoa</dt><dd>{{ 'Pessoa jurídica' if c.tipo_pessoa == 'PJ' else 'Pessoa física' }}</dd></div>
+    <div><dt>Categoria</dt><dd>{{ selo('Despachante', 'info') if c.categoria == 'DESPACHANTE' else selo('Particular', 'neutro') }}</dd></div>
+    <div><dt>{{ 'CNPJ' if c.tipo_pessoa == 'PJ' else 'CPF' }}</dt><dd>{{ c.documento|documento }}</dd></div>
+    <div><dt>Telefone</dt><dd>{{ c.telefone|telefone }}</dd></div>
+    <div><dt>E-mail</dt><dd>{{ c.email }}</dd></div>
+    <div><dt>Pedidos</dt><dd>{{ c.pedidos }}</dd></div>
+  </dl>
+</section>
+<section class="cartao">
+  <h2 class="secao-titulo">Endereço</h2>
+  <dl class="dados">
+    <div><dt>CEP</dt><dd>{{ c.cep|cep }}</dd></div>
+    <div><dt>Rua</dt><dd>{{ c.rua }}, {{ c.numero }}{% if c.complemento %} · {{ c.complemento }}{% endif %}</dd></div>
+    <div><dt>Bairro</dt><dd>{{ c.bairro }}</dd></div>
+    <div><dt>Cidade</dt><dd>{{ c.cidade }}/{{ c.uf }}</dd></div>
+  </dl>
+</section>
+{% endblock %}

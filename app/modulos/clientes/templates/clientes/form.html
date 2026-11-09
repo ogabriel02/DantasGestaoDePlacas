@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, campo, seletor %}
+{% block titulo %}{{ 'Editar cadastro' if editando else 'Novo cadastro' }}{% endblock %}
+{% block conteudo %}
+{% call cabecalho('Editar cadastro' if editando else 'Novo cadastro', 'Os campos marcados com * são obrigatórios') %}
+  <a class="btn btn--sec" href="{{ url_for('clientes.index') }}">Voltar</a>
+{% endcall %}
+<form method="post" novalidate
+      action="{{ url_for('clientes.editar', cliente_id=cliente_id) if editando else url_for('clientes.novo') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if erros %}<div class="aviso aviso--erro" role="alert">{{ erros.get('_geral') or 'Revise os campos destacados.' }}</div>{% endif %}
+
+  <section class="cartao">
+    <h2 class="secao-titulo">Identificação</h2>
+    <div class="grade-form">
+      {{ seletor('tipo_pessoa', 'Tipo de pessoa', [('PF', 'Pessoa física (CPF)'), ('PJ', 'Pessoa jurídica (CNPJ)')], dados.get('tipo_pessoa'), erros, coluna='col-4') }}
+      {{ seletor('categoria', 'Categoria', [('PARTICULAR', 'Particular'), ('DESPACHANTE', 'Despachante')], dados.get('categoria'), erros, coluna='col-4') }}
+      {{ campo('documento', 'CPF/CNPJ', dados.get('documento')|documento, erros, coluna='col-4', mascara='documento', maxlength=18) }}
+      {{ campo('nome', 'Nome ou razão social', dados.get('nome'), erros, coluna='col-8', maxlength=120, autofocus=not editando) }}
+      {{ campo('telefone', 'Telefone', dados.get('telefone')|telefone, erros, coluna='col-4', mascara='telefone', maxlength=15, tipo='tel') }}
+      {{ campo('email', 'E-mail', dados.get('email'), erros, coluna='col-12', tipo='email', maxlength=120) }}
+    </div>
+  </section>
+
+  <section class="cartao">
+    <h2 class="secao-titulo">Endereço</h2>
+    <div class="grade-form">
+      {{ campo('cep', 'CEP', dados.get('cep')|cep, erros, coluna='col-3', mascara='cep', maxlength=9) }}
+      {{ campo('rua', 'Rua', dados.get('rua'), erros, coluna='col-6', maxlength=100) }}
+      {{ campo('numero', 'Número', dados.get('numero'), erros, coluna='col-3', maxlength=10) }}
+      {{ campo('complemento', 'Complemento', dados.get('complemento'), erros, coluna='col-3', obrigatorio=False, maxlength=60) }}
+      {{ campo('bairro', 'Bairro', dados.get('bairro'), erros, coluna='col-3', maxlength=60) }}
+      {{ campo('cidade', 'Cidade', dados.get('cidade'), erros, coluna='col-4', maxlength=60) }}
+      {{ seletor('uf', 'UF', [('', 'Selecione')] + ufs_opcoes, dados.get('uf'), erros, coluna='col-2') }}
+    </div>
+  </section>
+
+  <div class="acoes-form">
+    <button type="submit" class="btn btn--pri">Salvar cadastro</button>
+    <a class="btn btn--sec" href="{{ url_for('clientes.index') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

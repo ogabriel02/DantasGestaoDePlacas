@@ -1,0 +1,23 @@
+# Ambiente virtual
+.venv/
+venv/
+
+# Segredos: NUNCA enviar ao GitHub
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+.DS_Store
+*.log

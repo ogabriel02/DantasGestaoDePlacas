@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+{{ cabecalho(titulo, "Área em desenvolvimento") }}
+<section class="cartao estado">
+  <h2>Esta tela ainda será construída</h2>
+  <p class="subtitulo">Responsável: <strong>{{ responsavel }}</strong> · Casos de uso: {{ ucs }}</p>
+  <p class="ajuda">Substitua o arquivo <code>app/modulos/{{ modulo }}/routes.py</code> pela implementação real.</p>
+</section>
+{% endblock %}

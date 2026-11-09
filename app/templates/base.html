@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}DGP{% endblock %} · Dantas Gestão de Placas</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/logo.jpg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+{% block corpo %}
+  <a class="pular" href="#conteudo">Ir para o conteúdo</a>
+  <div class="app{% if not usuario %} app--publico{% endif %}">
+    {% if usuario %}
+    <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+      <a class="marca" href="{{ home_url }}">
+        <span class="marca-logo"><img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo Dantas Placas"></span>
+        <span class="marca-texto"><strong>Dantas Gestão de Placas</strong><small>DGP · Painel interno</small></span>
+      </a>
+      <nav class="menu">
+        {% for grupo in menu %}
+        <p class="menu-titulo">{{ grupo.titulo }}</p>
+        <ul class="menu-lista">
+          {% for item in grupo.itens %}
+          <li>
+            <a class="menu-item{% if item.ativo %} ativo{% endif %}" href="{{ item.url }}"{% if item.ativo %} aria-current="page"{% endif %}>
+              <span class="menu-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ Markup(item.icone) }}</svg></span>
+              <span class="menu-rotulo">{{ item.rotulo }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endfor %}
+      </nav>
+      <div class="usuario-card">
+        <span class="avatar" aria-hidden="true">{{ iniciais }}</span>
+        <span class="usuario-info"><strong>{{ usuario.nome }}</strong><small>{{ usuario.perfil|perfil_rotulo }}</small></span>
+        <form method="post" action="{{ url_for('autenticacao.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn-sair" type="submit" title="Sair do sistema" aria-label="Sair do sistema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </form>
+      </div>
+    </aside>
+    {% endif %}
+    <div class="principal">
+      {% if usuario %}
+      <header class="topo-mobile">
+        <button type="button" id="menu-toggle" class="btn-menu" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <strong>DGP</strong>
+      </header>
+      {% endif %}
+      <main class="conteudo" id="conteudo">
+        {% include "_flash.html" %}
+        {% block conteudo %}{% endblock %}
+      </main>
+    </div>
+  </div>
+{% endblock %}
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

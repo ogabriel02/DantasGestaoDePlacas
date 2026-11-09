@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo %}
+{% block titulo %}Usuários{% endblock %}
+{% block conteudo %}
+{% call cabecalho("Usuários", "Quem pode acessar o sistema e com qual perfil") %}
+  <a class="btn btn--pri" href="{{ url_for('usuarios.novo') }}">+ Novo usuário</a>
+{% endcall %}
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <thead>
+        <tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Situação</th><th class="col-acoes">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td><strong>{{ u.nome }}</strong>{% if u.id == usuario.id %} <span class="voce">você</span>{% endif %}</td>
+          <td>{{ u.login }}</td>
+          <td>{{ selo(u.perfil|perfil_rotulo, 'info' if u.perfil == 'ADMINISTRADOR' else 'neutro') }}</td>
+          <td>{{ selo('Ativo', 'ok') if u.ativo else selo('Inativo', 'erro') }}</td>
+          <td class="col-acoes">
+            <a class="btn btn--sec btn--sm" href="{{ url_for('usuarios.editar', usuario_id=u.id) }}">Editar</a>
+            {% if u.id != usuario.id %}
+            <form method="post" action="{{ url_for('usuarios.alterar_status', usuario_id=u.id) }}" class="em-linha"
+                  {% if u.ativo %}data-confirmar="Inativar {{ u.nome }}? Ele não conseguirá mais entrar no sistema."{% endif %}>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn--sm {{ 'btn--perigo' if u.ativo else 'btn--sec' }}">{{ 'Inativar' if u.ativo else 'Reativar' }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="vazio">Nenhum usuário cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

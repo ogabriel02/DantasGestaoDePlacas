@@ -1,0 +1,51 @@
+{% macro cabecalho(titulo, subtitulo='') %}
+<div class="cabecalho">
+  <div>
+    <h1>{{ titulo }}</h1>
+    {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+  </div>
+  {% if caller %}<div class="cabecalho-acoes">{{ caller() }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro campo(nome, rotulo, valor, erros, tipo='text', obrigatorio=True, coluna='col-6', maxlength=None, mascara=None, autocomplete='off', somente_leitura=False, autofocus=False, ajuda='') %}
+<div class="campo {{ coluna }}{% if erros.get(nome) %} com-erro{% endif %}">
+  <label for="{{ nome }}">{{ rotulo }}{% if obrigatorio %}<span class="req" aria-hidden="true"> *</span>{% endif %}</label>
+  <input id="{{ nome }}" name="{{ nome }}" type="{{ tipo }}" value="{{ valor if valor is not none else '' }}"
+         {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+         {% if mascara %}data-mascara="{{ mascara }}"{% endif %}
+         autocomplete="{{ autocomplete }}"
+         {% if obrigatorio %}required{% endif %}
+         {% if somente_leitura %}readonly{% endif %}
+         {% if autofocus %}autofocus{% endif %}
+         {% if erros.get(nome) %}aria-invalid="true" aria-describedby="erro-{{ nome }}"{% endif %}>
+  {% if ajuda %}<p class="ajuda">{{ ajuda }}</p>{% endif %}
+  {% if erros.get(nome) %}<p class="erro-campo" id="erro-{{ nome }}" role="alert">{{ erros[nome] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro seletor(nome, rotulo, opcoes, valor, erros, coluna='col-6', obrigatorio=True, desabilitado=False, ajuda='') %}
+<div class="campo {{ coluna }}{% if erros.get(nome) %} com-erro{% endif %}">
+  <label for="{{ nome }}">{{ rotulo }}{% if obrigatorio %}<span class="req" aria-hidden="true"> *</span>{% endif %}</label>
+  <select id="{{ nome }}" name="{{ nome }}" {% if obrigatorio %}required{% endif %} {% if desabilitado %}disabled{% endif %}
+          {% if erros.get(nome) %}aria-invalid="true" aria-describedby="erro-{{ nome }}"{% endif %}>
+    {% for v, r in opcoes %}
+    <option value="{{ v }}"{% if v == valor %} selected{% endif %}>{{ r }}</option>
+    {% endfor %}
+  </select>
+  {% if ajuda %}<p class="ajuda">{{ ajuda }}</p>{% endif %}
+  {% if erros.get(nome) %}<p class="erro-campo" id="erro-{{ nome }}" role="alert">{{ erros[nome] }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro selo(texto, tipo='neutro') %}<span class="selo selo--{{ tipo }}">{{ texto }}</span>{% endmacro %}
+
+{% macro paginacao(pagina, paginas, endpoint, args) %}
+{% if paginas > 1 %}
+<nav class="paginacao" aria-label="Paginação">
+  {% if pagina > 1 %}<a class="btn btn--sec btn--sm" href="{{ url_for(endpoint, page=pagina - 1, **args) }}">Anterior</a>{% endif %}
+  <span>Página {{ pagina }} de {{ paginas }}</span>
+  {% if pagina < paginas %}<a class="btn btn--sec btn--sm" href="{{ url_for(endpoint, page=pagina + 1, **args) }}">Próxima</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
