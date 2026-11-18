@@ -355,7 +355,7 @@ class TestGeral(Base):
 
     def test_modulos_das_outras_partes_aparecem_como_em_construcao(self):
         self.entrar()
-        for url, nome in (("/pedidos/", "Tatiane"), ("/pagamentos/", "Jonathan"), ("/estoque/", "Jonathan"), ("/relatorios/", "Jonathan")):
+        for url, nome in (("/pagamentos/", "Jonathan"), ("/estoque/", "Jonathan"), ("/relatorios/", "Jonathan")):
             t = self.texto(self.c.get(url))
             self.assertIn(nome, t, url)
 

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cabecalho, selo %}
+{% block titulo %}Pedido {{ pedido.numero }}{% endblock %}
+{% block conteudo %}
+{% include 'pedidos/_estilo.html' %}
+<p class="pedidos-trilha"><a href="{{ url_for('pedidos.index') }}">Pedidos</a> / Pedido {{ pedido.numero }}</p>
+{% call cabecalho('Pedido ' ~ pedido.numero, situacoes.get(pedido.situacao, pedido.situacao)) %}
+{% if pedido.situacao not in ('FINALIZADO','CANCELADO') %}<a class="btn btn--perigo" href="{{ url_for('pedidos.cancelar', numero=pedido.numero) }}">Cancelar pedido</a>{% endif %}
+{% endcall %}
+{% if pedido.motivo %}<div class="aviso aviso--erro"><strong>Motivo do cancelamento:</strong> {{ pedido.motivo }}</div>{% endif %}
+<div class="pedidos-colunas">
+  <section class="cartao"><h2 class="secao-titulo">Cliente</h2><dl class="dados">
+    <div><dt>Nome</dt><dd><a href="{{ url_for('clientes.ver', cliente_id=pedido.cliente_id) }}">{{ pedido.cliente_nome }}</a></dd></div>
+    <div><dt>Categoria</dt><dd>{{ 'Despachante' if pedido.categoria == 'DESPACHANTE' else 'Particular' }}</dd></div>
+    <div><dt>CPF/CNPJ</dt><dd>{{ pedido.documento|documento }}</dd></div><div><dt>Telefone</dt><dd>{{ pedido.telefone|telefone }}</dd></div>
+  </dl></section>
+  <section class="cartao"><h2 class="secao-titulo">Veículo e pedido</h2><dl class="dados">
+    <div><dt>Chassi</dt><dd>{{ pedido.chassi }}</dd></div><div><dt>Data</dt><dd>{{ pedido.criado_em|data_hora }}</dd></div>
+    <div><dt>Registrado por</dt><dd>{{ pedido.usuario_nome }}</dd></div><div><dt>Última atualização</dt><dd>{{ pedido.atualizado_em|data_hora }}</dd></div>
+    <div><dt>Observações</dt><dd class="pedidos-observacoes">{{ pedido.observacoes or 'Nenhuma' }}</dd></div>
+  </dl></section>
+  <section class="cartao"><h2 class="secao-titulo">Autorização externa</h2>
+    <form method="post" action="{{ url_for('pedidos.autorizacao', numero=pedido.numero) }}" class="pedidos-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="campo"><label for="autorizacao">Situação informada pelo funcionário</label><select id="autorizacao" name="autorizacao">{% for valor, rotulo in autorizacoes.items() %}<option value="{{ valor }}" {% if (pedido.autorizacao or '') == valor %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+      <div><button class="btn btn--pri">Salvar autorização</button></div>
+    </form>
+  </section>
+  <section class="cartao"><h2 class="secao-titulo">Pagamento</h2>
+  {% if pagamento %}<dl class="dados"><div><dt>Forma</dt><dd>{{ pagamento.forma|replace('_', ' ')|capitalize }}</dd></div><div><dt>Valor</dt><dd>R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}</dd></div><div><dt>Situação</dt><dd>{{ pagamento.situacao|capitalize }}</dd></div><div><dt>Confirmado em</dt><dd>{{ pagamento.data_confirmacao|data_hora or 'Ainda não confirmado' }}</dd></div></dl>
+  {% else %}<p class="subtitulo">Sem cobrança gerada para este pedido.</p>{% endif %}
+  </section>
+</div>
+<section class="cartao cartao--tabela"><div class="tabela-wrap"><table class="tabela">
+  <caption class="secao-titulo">Placas do pedido</caption>
+  <thead><tr><th>Posição</th><th>Modelo</th><th>Número</th><th>Fundo</th><th>Caracteres</th><th>QR Code</th></tr></thead>
+  <tbody>{% for p in placas %}<tr><td>{{ p.posicao|capitalize }}</td><td>{{ p.modelo }}</td><td><strong>{{ p.numero_placa }}</strong></td><td>{{ p.cor_placa|capitalize if p.cor_placa else 'Padrão Mercosul' }}</td><td>{{ p.cor_caracteres|replace('_', '/')|capitalize }}</td><td class="pedidos-qr">{{ p.qr_code }}</td></tr>{% else %}<tr><td colspan="6" class="vazio">Sem placas cadastradas.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<div><a class="btn btn--sec" href="{{ url_for('pedidos.index') }}">Voltar para pedidos</a></div>
+{% endblock %}

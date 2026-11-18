@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cabecalho, selo, paginacao %}
+{% block titulo %}Pedidos{% endblock %}
+{% block conteudo %}
+{% include 'pedidos/_estilo.html' %}
+{% call cabecalho('Pedidos', 'Consulte, acompanhe e registre pedidos de placas') %}
+<a class="btn btn--pri" href="{{ url_for('pedidos.novo') }}">+ Novo pedido</a>
+{% endcall %}
+<section class="cartao">
+  <form method="get" class="pedidos-filtros" role="search">
+    <div class="campo"><label for="situacao">Situação</label><select id="situacao" name="situacao"><option value="">Todas</option>{% for valor, rotulo in situacoes.items() %}<option value="{{ valor }}" {% if filtros.situacao == valor %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}</select></div>
+    <div class="campo"><label for="cliente">Cliente ou CPF/CNPJ</label><input id="cliente" name="cliente" value="{{ filtros.cliente }}" maxlength="120" placeholder="Nome ou documento"></div>
+    <div class="campo"><label for="data">Data do pedido</label><input id="data" name="data" type="date" value="{{ filtros.data }}"></div>
+    <div class="campo"><label for="chassi">Chassi</label><input id="chassi" name="chassi" value="{{ filtros.chassi }}" maxlength="17" placeholder="Chassi completo ou parte"></div>
+    <div class="filtros-acoes"><button class="btn btn--pri">Filtrar</button><a class="btn btn--sec" href="{{ url_for('pedidos.index') }}">Limpar</a></div>
+  </form>
+</section>
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap"><table class="tabela pedidos-tabela">
+    <thead><tr><th>Nº / Data</th><th>Cliente</th><th>Chassi</th><th>Placas</th><th>Situação</th><th>Autorização</th><th>Pagamento</th><th>Ações</th></tr></thead>
+    <tbody>{% for p in pedidos %}<tr>
+      <td><strong>{{ p.numero }}</strong><span class="secundario">{{ p.criado_em|data_hora }}</span></td>
+      <td>{{ p.cliente_nome }}<span class="secundario">{{ 'Despachante' if p.categoria == 'DESPACHANTE' else 'Particular' }}</span></td>
+      <td class="nowrap">{{ p.chassi }}</td><td>{{ p.placas or 'Sem placas cadastradas' }}</td>
+      <td>{{ selo(situacoes.get(p.situacao, p.situacao), 'erro' if p.situacao == 'CANCELADO' else 'ok' if p.situacao == 'FINALIZADO' else 'info') }}{% if p.motivo %}<span class="secundario">{{ p.motivo }}</span>{% endif %}</td>
+      <td>{{ autorizacoes.get(p.autorizacao or '', p.autorizacao) }}</td><td>{{ p.pagamento|capitalize if p.pagamento else 'Sem cobrança' }}</td>
+      <td class="col-acoes"><a class="btn btn--sec btn--sm" href="{{ url_for('pedidos.ver', numero=p.numero) }}">Ver</a>{% if p.situacao not in ('FINALIZADO', 'CANCELADO') %}<a class="btn btn--perigo btn--sm" href="{{ url_for('pedidos.cancelar', numero=p.numero) }}">Cancelar</a>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="8" class="vazio">Nenhum pedido encontrado para estes filtros.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="rodape-tabela"><span>{{ total }} pedido{{ '' if total == 1 else 's' }}</span>{{ paginacao(pagina, paginas, 'pedidos.index', filtros) }}</div>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+.pedidos-filtros { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; align-items:end; }
+.pedidos-filtros .filtros-acoes { grid-column:1/-1; justify-content:flex-end; }
+.pedidos-colunas { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.pedidos-form { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; min-width:0; }
+.pedidos-form > .acoes-form { grid-column:auto; }
+.pedidos-form > .cartao { min-width:0; }
+.conteudo:has(.pedidos-trilha), .conteudo:has(.pedidos-filtros) { grid-template-columns:minmax(0,1fr); }
+.pedidos-form .cartao + .cartao { margin-top:0; }
+.pedidos-trilha { margin:0; color:var(--suave); font-size:.85rem; }
+.pedidos-tabela { min-width:1050px; }
+.pedidos-qr { overflow-wrap:anywhere; max-width:260px; }
+.pedidos-observacoes { white-space:pre-wrap; overflow-wrap:anywhere; }
+.pedidos-colunas .cartao { min-width:0; }
+.pedidos-cancelar { max-width:760px; }
+@media(max-width:1100px) { .pedidos-filtros { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:700px) { .pedidos-colunas,.pedidos-filtros { grid-template-columns:1fr; } }

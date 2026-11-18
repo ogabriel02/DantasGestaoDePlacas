@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cabecalho, campo, seletor %}
+{% block titulo %}Novo pedido{% endblock %}
+{% block conteudo %}
+{% include 'pedidos/_estilo.html' %}
+<p class="pedidos-trilha"><a href="{{ url_for('pedidos.index') }}">Pedidos</a> / Novo pedido</p>
+{{ cabecalho('Novo pedido', 'Selecione o cliente e preencha os dados do veículo e das placas') }}
+<section class="cartao">
+  <h2 class="secao-titulo">1. Buscar cliente</h2>
+  <form method="get" class="filtros">
+    <div class="campo filtro-busca"><label for="q">CPF ou CNPJ</label><input id="q" name="q" type="search" value="{{ busca }}" maxlength="18" placeholder="Digite o CPF ou CNPJ completo" required></div>
+    <div class="filtros-acoes"><button class="btn btn--sec">Buscar</button><a href="{{ url_for('clientes.novo') }}" class="btn btn--sec">Cadastrar cliente</a></div>
+  </form>
+  <p class="ajuda">O cliente aparece somente após a busca pelo CPF ou CNPJ completo, com ou sem pontuação.</p>
+</section>
+<form method="post" class="pedidos-form" id="pedido-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if erros %}<div class="aviso aviso--erro" role="alert">Confira os campos indicados antes de registrar o pedido.</div>{% endif %}
+  <section class="cartao"><div class="grade-form">
+    <div class="campo col-12"><label for="cliente_id">Cliente selecionado <span class="req">*</span></label>
+      <select id="cliente_id" name="cliente_id" required><option value="">Selecione o cliente encontrado</option>{% for c in clientes %}<option value="{{ c.id }}" {% if dados.cliente_id|string == c.id|string %}selected{% endif %}>{{ c.nome }} · {{ c.documento|documento }} · {{ 'Despachante' if c.categoria == 'DESPACHANTE' else 'Particular' }}</option>{% endfor %}</select>
+      {% if erros.cliente_id %}<p class="erro-campo" role="alert">{{ erros.cliente_id }}</p>{% endif %}
+    </div>
+  </div></section>
+  <section class="cartao"><h2 class="secao-titulo">2. Veículo</h2><div class="grade-form">
+    {{ campo('chassi', 'Chassi', dados.get('chassi'), erros, maxlength=17, ajuda='17 caracteres') }}
+    {{ seletor('tipo_veiculo', 'Tipo de veículo', [('CARRO','Carro'),('MOTO','Moto')], dados.tipo_veiculo, erros) }}
+  </div></section>
+  <section class="cartao"><h2 class="secao-titulo">3. Placas</h2><div class="grade-form">
+    {{ seletor('posicao', 'Quais placas serão feitas?', [('DIANTEIRA','Dianteira'),('TRASEIRA','Traseira'),('PAR','Par (dianteira e traseira)')], dados.posicao, erros, coluna='col-12', ajuda='Para moto, apenas a traseira. O par usa o mesmo número e um QR Code distinto para cada placa.') }}
+    <div class="campo col-6"><label for="item_id">Modelo de placa <span class="req">*</span></label><select id="item_id" name="item_id" required><option value="">Selecione o modelo</option>{% for m in modelos %}<option value="{{ m.id }}" data-modelo="{{ m.modelo }}" {% if dados.get('item_id')|string == m.id|string %}selected{% endif %}>{{ m.modelo }} · estoque: {{ m.quantidade }}</option>{% endfor %}</select>{% if erros.item_id %}<p class="erro-campo">{{ erros.item_id }}</p>{% endif %}<p class="ajuda">O estoque é verificado e baixado na finalização do pedido.</p></div>
+    {{ campo('numero_placa', 'Número da placa', dados.get('numero_placa'), erros, maxlength=7) }}
+    {{ campo('qr_dianteira', 'QR Code da placa dianteira', dados.get('qr_dianteira'), erros, maxlength=255, obrigatorio=False, ajuda='Obrigatório para dianteira ou par.') }}
+    {{ campo('qr_traseira', 'QR Code da placa traseira', dados.get('qr_traseira'), erros, maxlength=255, obrigatorio=False, ajuda='Obrigatório para traseira ou par.') }}
+    {{ seletor('cor_placa', 'Cor do fundo', [('', 'Padrão Mercosul (branco)'),('COLECIONADOR','Colecionador')], dados.get('cor_placa',''), erros, obrigatorio=False) }}
+    {{ seletor('cor_caracteres', 'Cor dos caracteres', [('PRETA','Preta'),('VERMELHA','Vermelha'),('AZUL','Azul'),('VERDE','Verde'),('DOURADA','Dourada'),('BRANCA','Branca (colecionador)'),('CINZA_PRATA','Cinza/prata (colecionador)')], dados.cor_caracteres, erros) }}
+  </div></section>
+  <section class="cartao"><h2 class="secao-titulo">4. Observações</h2><div class="campo"><label for="observacoes">Observações (opcional)</label><textarea id="observacoes" name="observacoes" rows="3">{{ dados.get('observacoes', '') }}</textarea></div></section>
+  <div class="aviso aviso--info">O número do pedido será gerado ao registrar. Situação inicial: Criado.</div>
+  <div class="acoes-form"><button class="btn btn--pri">Registrar pedido</button><a class="btn btn--sec" href="{{ url_for('pedidos.index') }}">Voltar</a></div>
+</form>
+<script src="{{ url_for('pedidos.static', filename='pedidos.js') }}" defer></script>
+{% endblock %}

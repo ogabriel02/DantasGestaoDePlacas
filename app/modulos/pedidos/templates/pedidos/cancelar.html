@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cabecalho %}
+{% block titulo %}Cancelar pedido {{ pedido.numero }}{% endblock %}
+{% block conteudo %}
+{% include 'pedidos/_estilo.html' %}
+<p class="pedidos-trilha"><a href="{{ url_for('pedidos.index') }}">Pedidos</a> / <a href="{{ url_for('pedidos.ver', numero=pedido.numero) }}">Pedido {{ pedido.numero }}</a> / Cancelar</p>
+{{ cabecalho('Cancelar pedido ' ~ pedido.numero, 'Confira o pedido e informe o motivo do cancelamento') }}
+<section class="cartao pedidos-cancelar">
+  <dl class="dados"><div><dt>Cliente</dt><dd>{{ pedido.cliente_nome }}</dd></div><div><dt>Chassi</dt><dd>{{ pedido.chassi }}</dd></div><div><dt>Situação atual</dt><dd>{{ situacoes.get(pedido.situacao, pedido.situacao) }}</dd></div></dl>
+  {% if pedido.situacao in ('FINALIZADO','CANCELADO') %}<p class="aviso aviso--erro">Este pedido está encerrado e não pode ser cancelado.</p><a class="btn btn--sec" href="{{ url_for('pedidos.ver', numero=pedido.numero) }}">Voltar ao pedido</a>
+  {% else %}
+  <p class="aviso aviso--info">Ao confirmar, o pedido ficará cancelado. Esta tela não desfaz pagamentos já recebidos.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="campo"><label for="motivo">Motivo do cancelamento <span class="req">*</span></label><textarea id="motivo" name="motivo" required rows="4" autofocus>{{ motivo }}</textarea></div>
+    <div class="acoes-form"><button class="btn btn--perigo">Confirmar cancelamento</button><a class="btn btn--sec" href="{{ url_for('pedidos.ver', numero=pedido.numero) }}">Voltar ao pedido</a></div>
+  </form>{% endif %}
+</section>
+{% endblock %}
