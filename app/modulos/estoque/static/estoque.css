@@ -1,0 +1,25 @@
+/* Estoque (UC10) - complementa app.css sem alterar classes globais. */
+.est-trilha { margin: 0; color: var(--suave); font-size: .85rem; }
+.est-resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.est-cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); padding: 18px 20px; border-top: 4px solid var(--borda-forte); }
+.est-cartao--ok { border-top-color: var(--ok); }
+.est-cartao--alerta { border-top-color: #d99a00; }
+.est-cartao--erro { border-top-color: var(--erro); }
+.est-cartao--info { border-top-color: var(--acento); }
+.est-cartao small { display: block; color: var(--suave); font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.est-cartao strong { display: block; font-size: 1.9rem; font-weight: 800; color: var(--azul-900); line-height: 1.2; margin-top: 4px; }
+.est-novo summary { cursor: pointer; font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.est-novo summary::-webkit-details-marker { display: none; }
+.est-novo summary::after { content: "+"; font-size: 1.3rem; color: var(--acento); }
+.est-novo[open] summary::after { content: "−"; }
+.est-novo[open] summary { margin-bottom: 18px; }
+.est-colunas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.est-colunas > .cartao { min-width: 0; }
+.est-colunas form { display: grid; gap: 16px; }
+.est-lista-avisos { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.est-lista-avisos li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.est-saldo { font-size: 1.05rem; font-weight: 800; }
+@media (max-width: 960px) {
+  .est-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .est-colunas { grid-template-columns: 1fr; }
+}

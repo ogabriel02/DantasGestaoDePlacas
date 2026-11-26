@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo, paginacao %}
+{% block titulo %}Pagamentos{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('pagamentos.static', filename='pagamentos.css') }}">
+{{ cabecalho("Pagamentos", "Gere cobranças Pix, confirme recebimentos e finalize pedidos") }}
+<section class="cartao">
+  <form method="get" class="filtros pagamentos-filtros" role="search">
+    <div class="campo">
+      <label for="q">Nº do pedido, cliente ou CPF/CNPJ</label>
+      <input id="q" name="q" type="search" value="{{ filtros.q }}" maxlength="80" placeholder="Digite para buscar">
+    </div>
+    <div class="campo">
+      <label for="situacao">Situação do pedido</label>
+      <select id="situacao" name="situacao">
+        <option value="">Todas</option>
+        {% for valor, rotulo in situacoes.items() %}<option value="{{ valor }}"{% if filtros.situacao == valor %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="campo">
+      <label for="pagamento">Pagamento</label>
+      <select id="pagamento" name="pagamento">
+        <option value="">Todos</option>
+        {% for valor, rotulo in filtro_pagamento.items() %}<option value="{{ valor }}"{% if filtros.pagamento == valor %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filtros-acoes">
+      <button class="btn btn--pri" type="submit">Filtrar</button>
+      <a class="btn btn--sec" href="{{ url_for('pagamentos.index') }}">Limpar</a>
+    </div>
+  </form>
+</section>
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <thead>
+        <tr><th>Pedido</th><th>Cliente</th><th>Situação</th><th>Cobrança</th><th>Pagamento</th><th class="col-acoes">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for p in pedidos %}
+        <tr>
+          <td><strong>Nº {{ p.numero }}</strong><span class="secundario">{{ p.criado_em|data_hora }}</span></td>
+          <td>{{ p.cliente_nome }}<span class="secundario">{{ 'Despachante' if p.categoria == 'DESPACHANTE' else 'Particular' }} · {{ p.placas }} placa{{ '' if p.placas == 1 else 's' }}</span></td>
+          <td>{{ selo(situacoes.get(p.situacao, p.situacao), selo_situacao.get(p.situacao, 'neutro')) }}</td>
+          <td class="nowrap">{% if p.valor is not none %}<strong>{{ p.valor|moeda }}</strong><span class="secundario">{{ p.forma }} · {{ p.cobranca_em|data_hora }}</span>{% else %}<span class="secundario">Sem cobrança</span>{% endif %}</td>
+          <td>{% if p.pagamento_situacao %}{{ selo(pagamentos_rotulo.get(p.pagamento_situacao, p.pagamento_situacao), selo_pagamento.get(p.pagamento_situacao, 'neutro')) }}{% if p.data_confirmacao %}<span class="secundario">{{ p.data_confirmacao|data_hora }}</span>{% endif %}{% else %}—{% endif %}</td>
+          <td class="col-acoes">
+            {% set acao = {'CRIADO': 'Gerar cobrança', 'AGUARDANDO_PAGAMENTO': 'Confirmar', 'EM_PRODUCAO': 'Finalizar'}.get(p.situacao) %}
+            <a class="btn {{ 'btn--pri' if acao else 'btn--sec' }} btn--sm" href="{{ url_for('pagamentos.pedido', numero=p.numero) }}">{{ acao or 'Ver' }}</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="vazio">Nenhum pedido encontrado para estes filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rodape-tabela">
+    <span>{{ total }} pedido{{ '' if total == 1 else 's' }}</span>
+    {{ paginacao(pagina, paginas, 'pagamentos.index', args_paginacao) }}
+  </div>
+</section>
+{% endblock %}

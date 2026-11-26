@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo %}
+{% block titulo %}Pagamento do pedido {{ pedido.numero }}{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('pagamentos.static', filename='pagamentos.css') }}">
+<p class="pg-trilha"><a href="{{ url_for('pagamentos.index') }}">Pagamentos</a> / Pedido {{ pedido.numero }}</p>
+{% call cabecalho('Pedido ' ~ pedido.numero, pedido.cliente_nome ~ ' · ' ~ ('Despachante' if pedido.categoria == 'DESPACHANTE' else 'Particular')) %}
+  {% if url_pedido %}<a class="btn btn--sec" href="{{ url_pedido }}">Ver pedido completo</a>{% endif %}
+  <a class="btn btn--sec" href="{{ url_for('pagamentos.index') }}">Voltar</a>
+{% endcall %}
+
+<section class="cartao">
+  <dl class="dados">
+    <div><dt>Situação do pedido</dt><dd>{{ selo(situacoes.get(pedido.situacao, pedido.situacao), selo_situacao.get(pedido.situacao, 'neutro')) }}</dd></div>
+    <div><dt>Autorização externa</dt><dd>{{ autorizacoes.get(pedido.autorizacao, pedido.autorizacao) }}</dd></div>
+    <div><dt>CPF/CNPJ</dt><dd>{{ pedido.documento|documento }}</dd></div>
+    <div><dt>Última atualização</dt><dd>{{ pedido.atualizado_em|data_hora }}</dd></div>
+  </dl>
+  {% if pedido.motivo %}<p class="aviso aviso--erro" style="margin:16px 0 0"><strong>Motivo do cancelamento:</strong> {{ pedido.motivo }}</p>{% endif %}
+</section>
+
+<div class="pg-colunas">
+  <section class="cartao" aria-labelledby="titulo-cobranca">
+    <h2 class="secao-titulo" id="titulo-cobranca">1. Cobrança Pix</h2>
+    {% if pagamento %}
+      <p class="pg-valor">{{ pagamento.valor|moeda }}</p>
+      <dl class="dados" style="margin-top:16px">
+        <div><dt>Forma</dt><dd>{{ 'Pix' if pagamento.forma == 'PIX' else pagamento.forma }}</dd></div>
+        <div><dt>Situação</dt><dd>{{ selo(pagamentos_rotulo.get(pagamento.situacao, pagamento.situacao), selo_pagamento.get(pagamento.situacao, 'neutro')) }}</dd></div>
+        <div><dt>Gerada em</dt><dd>{{ pagamento.criado_em|data_hora }}</dd></div>
+        <div><dt>Confirmada em</dt><dd>{{ pagamento.data_confirmacao|data_hora or 'Ainda não confirmada' }}</dd></div>
+      </dl>
+      {% if pagamento.situacao == 'PENDENTE' and pedido.situacao == 'AGUARDANDO_PAGAMENTO' %}
+        <p class="aviso aviso--info" style="margin:16px 0 0">Confira no extrato da conta se o Pix de {{ pagamento.valor|moeda }} foi recebido antes de confirmar.</p>
+        <div class="pg-acoes">
+          <form method="post" action="{{ url_for('pagamentos.confirmar', numero=pedido.numero) }}" data-confirmar="Confirmar o recebimento do Pix de {{ pagamento.valor|moeda }} do pedido {{ pedido.numero }}?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn--pri" type="submit">Confirmar pagamento</button>
+          </form>
+        </div>
+      {% endif %}
+    {% elif pedido.situacao == 'CRIADO' %}
+      {% if valor is not none %}
+      <p class="pg-valor">{{ valor|moeda }}</p>
+      <table class="pg-itens">
+        <tbody>
+          {% for p in placas %}
+          <tr><td>{{ p.posicao|capitalize }} · {{ p.modelo }}</td><td><strong>{{ p.numero_placa }}</strong></td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot><tr><td>{{ descricao_preco }}</td><td>{{ valor|moeda }}</td></tr></tfoot>
+      </table>
+      {% else %}
+      <p class="aviso aviso--erro">Este pedido ainda não tem placas. Cadastre as placas antes de gerar a cobrança.</p>
+      {% endif %}
+      <p class="ajuda">Tabela de preços: {% for rotulo, preco in tabela_precos %}{{ rotulo }} {{ preco|moeda }}{{ ' · ' if not loop.last }}{% endfor %}. Forma de pagamento: Pix.</p>
+      <div class="pg-acoes">
+        <form method="post" action="{{ url_for('pagamentos.gerar_cobranca', numero=pedido.numero) }}" data-confirmar="Gerar cobrança Pix de {{ valor|moeda }} para o pedido {{ pedido.numero }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--pri" type="submit"{% if valor is none %} disabled{% endif %}>Gerar cobrança Pix</button>
+        </form>
+      </div>
+    {% else %}
+      <p class="subtitulo">Sem cobrança para este pedido.</p>
+    {% endif %}
+  </section>
+
+  <section class="cartao" aria-labelledby="titulo-finalizar">
+    <h2 class="secao-titulo" id="titulo-finalizar">2. Finalizar pedido</h2>
+    {% if pedido.situacao == 'FINALIZADO' %}
+      <p class="aviso aviso--ok">Pedido finalizado. As placas já foram baixadas do estoque.</p>
+    {% elif pedido.situacao == 'CANCELADO' %}
+      <p class="aviso aviso--erro">Pedido cancelado. Não pode ser finalizado.</p>
+    {% else %}
+      <ul class="pg-checklist">
+        {% for r in requisitos %}
+        <li><span class="pg-marca pg-marca--{{ 'ok' if r.ok else 'pendente' }}" aria-hidden="true">{{ '✓' if r.ok else '!' }}</span><span>{{ r.texto }}<span class="pular">{{ ' (atendido)' if r.ok else ' (pendente)' }}</span></span></li>
+        {% endfor %}
+      </ul>
+      <p class="ajuda">A conferência acima é só uma orientação: quem decide é o banco de dados, que também baixa o estoque.</p>
+      {% if pedido.situacao == 'EM_PRODUCAO' %}
+      <div class="pg-acoes">
+        <form method="post" action="{{ url_for('pagamentos.finalizar', numero=pedido.numero) }}" data-confirmar="Finalizar o pedido {{ pedido.numero }}? As placas serão baixadas do estoque.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--pri" type="submit">Finalizar pedido</button>
+        </form>
+      </div>
+      {% endif %}
+    {% endif %}
+  </section>
+</div>
+
+{% if placas %}
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <caption class="pular">Placas do pedido</caption>
+      <thead><tr><th>Posição</th><th>Número</th><th>Modelo</th><th>Saldo em estoque</th></tr></thead>
+      <tbody>
+        {% for p in placas %}
+        <tr><td>{{ p.posicao|capitalize }}</td><td><strong>{{ p.numero_placa }}</strong></td><td>{{ p.modelo }}</td><td>{{ p.saldo }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

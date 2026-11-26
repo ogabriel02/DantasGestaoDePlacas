@@ -1,0 +1,21 @@
+/* Relatorios (UC11) - complementa app.css sem alterar classes globais. */
+.rel-filtros { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: end; }
+.rel-filtros .filtros-acoes { grid-column: 1 / -1; justify-content: flex-end; }
+.rel-abas { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--borda); padding-bottom: 0; }
+.rel-aba { padding: 10px 16px; border-radius: 10px 10px 0 0; text-decoration: none; color: var(--suave); font-weight: 600; font-size: .92rem; border: 1px solid transparent; border-bottom: 0; margin-bottom: -1px; }
+.rel-aba:hover { color: var(--texto); background: #f1f5fa; }
+.rel-aba[aria-current="page"] { color: var(--acento-escuro); background: var(--superficie); border-color: var(--borda); }
+.rel-resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.rel-cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); padding: 18px 20px; border-top: 4px solid var(--acento); }
+.rel-cartao--ok { border-top-color: var(--ok); }
+.rel-cartao small { display: block; color: var(--suave); font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.rel-cartao strong { display: block; font-size: 1.7rem; font-weight: 800; color: var(--azul-900); line-height: 1.2; margin-top: 4px; }
+.rel-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tabela tfoot td { font-weight: 800; background: #f8fafd; border-top: 1px solid var(--borda); padding: 14px 16px; }
+.rel-periodo { margin: 0; color: var(--suave); font-size: .9rem; }
+@media (max-width: 1100px) { .rel-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rel-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rel-filtros, .rel-resumo { grid-template-columns: 1fr; } }
+@media print {
+  .sidebar, .topo-mobile, .rel-filtros-cartao, .rel-abas, .cabecalho-acoes { display: none !important; }
+  .app { grid-template-columns: 1fr; }
+}

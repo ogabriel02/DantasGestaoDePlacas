@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, campo, selo %}
+{% block titulo %}Estoque{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('estoque.static', filename='estoque.css') }}">
+{{ cabecalho("Estoque", "Saldo de placas por modelo, entradas, ajustes e nível mínimo") }}
+
+<div class="est-resumo">
+  <div class="est-cartao est-cartao--info"><small>Modelos</small><strong>{{ resumo.modelos }}</strong></div>
+  <div class="est-cartao est-cartao--ok"><small>Unidades em estoque</small><strong>{{ resumo.unidades }}</strong></div>
+  <div class="est-cartao est-cartao--alerta"><small>No nível mínimo</small><strong>{{ resumo.minimo }}</strong></div>
+  <div class="est-cartao est-cartao--erro"><small>Esgotados</small><strong>{{ resumo.esgotados }}</strong></div>
+</div>
+
+{% if avisos %}
+<section class="cartao" aria-labelledby="titulo-avisos">
+  <h2 class="secao-titulo" id="titulo-avisos">Avisos de estoque baixo ({{ avisos|length }})</h2>
+  <ul class="est-lista-avisos">
+    {% for a in avisos %}
+    <li>{{ selo('Esgotado' if a.tipo == 'ESTOQUE_ESGOTADO' else 'Nível mínimo', 'erro' if a.tipo == 'ESTOQUE_ESGOTADO' else 'alerta') }}
+      <a href="{{ url_for('estoque.item', item_id=a.item_estoque_id) }}">{{ a.modelo }}</a>
+      <span class="secundario" style="display:inline">{{ a.mensagem }} · {{ a.data|data_hora }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <thead>
+        <tr><th>Modelo</th><th>Saldo</th><th>Nível mínimo</th><th>Situação</th><th>Em pedidos abertos</th><th>Atualizado</th><th class="col-acoes">Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for i in itens %}
+        <tr>
+          <td><strong>{{ i.modelo }}</strong></td>
+          <td class="est-saldo">{{ i.quantidade }}</td>
+          <td>{{ i.nivel_minimo }}</td>
+          <td>{{ selo(estados.get(i.estado, i.estado), selo_estoque.get(i.estado, 'neutro')) }}</td>
+          <td>{{ i.em_pedidos }}{% if i.em_pedidos > i.quantidade %}<span class="secundario">Faltam {{ i.em_pedidos - i.quantidade }} para atender</span>{% endif %}</td>
+          <td class="nowrap">{{ i.atualizado_em|data_hora }}</td>
+          <td class="col-acoes"><a class="btn btn--pri btn--sm" href="{{ url_for('estoque.item', item_id=i.id) }}">Movimentar</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="vazio">Nenhum modelo cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rodape-tabela"><span>"Em pedidos abertos" conta as placas de pedidos ainda não finalizados nem cancelados. A baixa acontece na finalização.</span></div>
+</section>
+
+<details class="cartao est-novo"{% if abrir_novo %} open{% endif %}>
+  <summary>Cadastrar novo modelo de placa</summary>
+  <form method="post" action="{{ url_for('estoque.novo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if erros._geral %}<div class="aviso aviso--erro" role="alert">{{ erros._geral }}</div>{% endif %}
+    <div class="grade-form">
+      {{ campo('modelo', 'Nome do modelo', dados.modelo, erros, maxlength=60, coluna='col-6', ajuda='Use "moto" no nome dos modelos de motocicleta e "automovel" nos de carro: o cadastro de pedidos usa o nome para conferir o tipo de veículo.') }}
+      {{ campo('nivel_minimo', 'Nível mínimo', dados.nivel_minimo, erros, tipo='number', coluna='col-3', ajuda='Abaixo ou igual a este saldo, o sistema avisa.') }}
+      {{ campo('quantidade', 'Entrada inicial', dados.quantidade, erros, tipo='number', obrigatorio=False, coluna='col-3', ajuda='Opcional. Registrada como entrada.') }}
+      <div class="acoes-form"><button class="btn btn--pri" type="submit">Cadastrar modelo</button></div>
+    </div>
+  </form>
+</details>
+{% endblock %}

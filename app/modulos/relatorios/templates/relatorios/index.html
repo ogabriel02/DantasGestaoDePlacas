@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo %}
+{% block titulo %}Relatórios{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('relatorios.static', filename='relatorios.css') }}">
+{% call cabecalho('Relatórios', 'Pedidos, placas e valores por período, despachante e tipo de placa') %}
+  <a class="btn btn--pri" href="{{ url_for('relatorios.exportar', **args_url) }}">Exportar CSV (Excel)</a>
+  <button class="btn btn--sec" type="button" onclick="window.print()">Imprimir</button>
+{% endcall %}
+
+<section class="cartao rel-filtros-cartao">
+  <form method="get" class="rel-filtros" role="search">
+    <input type="hidden" name="visao" value="{{ visao }}">
+    <div class="campo"><label for="inicio">De</label><input id="inicio" name="inicio" type="date" value="{{ filtros.inicio.isoformat() }}" required></div>
+    <div class="campo"><label for="fim">Até</label><input id="fim" name="fim" type="date" value="{{ filtros.fim.isoformat() }}" required></div>
+    <div class="campo"><label for="despachante">Despachante</label>
+      <select id="despachante" name="despachante"><option value="">Todos os clientes</option>
+        {% for d in despachantes %}<option value="{{ d.id }}"{% if filtros.despachante == d.id %} selected{% endif %}>{{ d.nome }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label for="item">Tipo de placa</label>
+      <select id="item" name="item"><option value="">Todos</option>
+        {% for m in modelos %}<option value="{{ m.id }}"{% if filtros.item == m.id %} selected{% endif %}>{{ m.modelo }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label for="situacao">Situação</label>
+      <select id="situacao" name="situacao"><option value="">Todas</option>
+        {% for valor, rotulo in situacoes.items() %}<option value="{{ valor }}"{% if filtros.situacao == valor %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+      </select></div>
+    <div class="filtros-acoes"><button class="btn btn--pri" type="submit">Aplicar filtros</button><a class="btn btn--sec" href="{{ url_for('relatorios.index', visao=visao) }}">Limpar</a></div>
+  </form>
+</section>
+
+<p class="rel-periodo">Período: <strong>{{ filtros.inicio.strftime('%d/%m/%Y') }} a {{ filtros.fim.strftime('%d/%m/%Y') }}</strong> (data de criação do pedido){% if filtros.despachante %} · Despachante: <strong>{{ (despachantes|selectattr('id', 'equalto', filtros.despachante)|first).nome }}</strong>{% endif %}{% if filtros.item %} · Tipo: <strong>{{ (modelos|selectattr('id', 'equalto', filtros.item)|first).modelo }}</strong>{% endif %}{% if filtros.situacao %} · Situação: <strong>{{ situacoes[filtros.situacao] }}</strong>{% endif %}</p>
+
+<div class="rel-resumo">
+  <div class="rel-cartao"><small>Pedidos</small><strong>{{ geral.pedidos }}</strong></div>
+  <div class="rel-cartao"><small>Placas</small><strong>{{ geral.placas }}</strong></div>
+  <div class="rel-cartao"><small>Valor cobrado</small><strong>{{ geral.cobrado|moeda }}</strong></div>
+  <div class="rel-cartao rel-cartao--ok"><small>Valor recebido</small><strong>{{ geral.recebido|moeda }}</strong></div>
+</div>
+
+<nav class="rel-abas" aria-label="Tipo de relatório">
+  {% for chave, rotulo in visoes.items() %}
+  <a class="rel-aba" href="{{ url_for('relatorios.index', **dict(args_url, visao=chave)) }}"{% if chave == visao %} aria-current="page"{% endif %}>{{ rotulo }}</a>
+  {% endfor %}
+</nav>
+
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <caption class="pular">{{ visoes[visao] }}</caption>
+      {% if visao == 'resumo' %}
+      <thead><tr><th>Situação</th><th class="rel-num">Pedidos</th><th class="rel-num">Placas</th><th class="rel-num">Valor cobrado</th><th class="rel-num">Valor recebido</th></tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr><td>{{ selo(l.rotulo, selo_situacao.get(l.situacao, 'neutro')) }}</td><td class="rel-num">{{ l.pedidos }}</td><td class="rel-num">{{ l.placas }}</td><td class="rel-num">{{ l.cobrado|moeda }}</td><td class="rel-num">{{ l.recebido|moeda }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td>Total</td><td class="rel-num">{{ totais.pedidos }}</td><td class="rel-num">{{ totais.placas }}</td><td class="rel-num">{{ totais.cobrado|moeda }}</td><td class="rel-num">{{ totais.recebido|moeda }}</td></tr></tfoot>
+
+      {% elif visao == 'despachantes' %}
+      <thead><tr><th>Despachante</th><th class="rel-num">Pedidos</th><th class="rel-num">Placas</th><th class="rel-num">Finalizados</th><th class="rel-num">Em aberto</th><th class="rel-num">Cancelados</th><th class="rel-num">Cobrado</th><th class="rel-num">Recebido</th></tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr><td><a href="{{ url_for('clientes.ver', cliente_id=l.id) }}">{{ l.nome }}</a><span class="secundario">{{ l.documento|documento }}</span></td>
+          <td class="rel-num">{{ l.pedidos }}</td><td class="rel-num">{{ l.placas }}</td><td class="rel-num">{{ l.finalizados }}</td><td class="rel-num">{{ l.em_aberto }}</td><td class="rel-num">{{ l.cancelados }}</td><td class="rel-num">{{ l.cobrado|moeda }}</td><td class="rel-num">{{ l.recebido|moeda }}</td></tr>
+        {% else %}
+        <tr><td colspan="8" class="vazio">Nenhum pedido de despachante com estes filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if linhas %}<tfoot><tr><td>Total</td><td class="rel-num">{{ totais.pedidos }}</td><td class="rel-num">{{ totais.placas }}</td><td class="rel-num">{{ totais.finalizados }}</td><td class="rel-num">{{ totais.em_aberto }}</td><td class="rel-num">{{ totais.cancelados }}</td><td class="rel-num">{{ totais.cobrado|moeda }}</td><td class="rel-num">{{ totais.recebido|moeda }}</td></tr></tfoot>{% endif %}
+
+      {% elif visao == 'tipos' %}
+      <thead><tr><th>Tipo de placa</th><th class="rel-num">Placas</th><th class="rel-num">Pedidos</th><th class="rel-num">Dianteiras</th><th class="rel-num">Traseiras</th><th class="rel-num">Entregues</th><th class="rel-num">Em cancelados</th></tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr><td><strong>{{ l.modelo }}</strong></td><td class="rel-num">{{ l.placas }}</td><td class="rel-num">{{ l.pedidos }}</td><td class="rel-num">{{ l.dianteiras }}</td><td class="rel-num">{{ l.traseiras }}</td><td class="rel-num">{{ l.entregues }}</td><td class="rel-num">{{ l.canceladas }}</td></tr>
+        {% else %}
+        <tr><td colspan="7" class="vazio">Nenhuma placa com estes filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if linhas %}<tfoot><tr><td>Total</td><td class="rel-num">{{ totais.placas }}</td><td class="rel-num">{{ totais.pedidos }}</td><td class="rel-num">{{ totais.dianteiras }}</td><td class="rel-num">{{ totais.traseiras }}</td><td class="rel-num">{{ totais.entregues }}</td><td class="rel-num">{{ totais.canceladas }}</td></tr></tfoot>{% endif %}
+
+      {% else %}
+      <thead><tr><th>Pedido</th><th>Cliente</th><th>Situação</th><th>Placas</th><th class="rel-num">Valor</th><th>Pagamento</th></tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr><td><a href="{{ url_for('pagamentos.pedido', numero=l.numero) }}"><strong>Nº {{ l.numero }}</strong></a><span class="secundario">{{ l.criado_em|data_hora }}</span></td>
+          <td>{{ l.cliente_nome }}<span class="secundario">{{ 'Despachante' if l.categoria == 'DESPACHANTE' else 'Particular' }}</span></td>
+          <td>{{ selo(situacoes.get(l.situacao, l.situacao), selo_situacao.get(l.situacao, 'neutro')) }}</td>
+          <td>{{ l.placas }}{% if l.descricao_placas %}<span class="secundario">{{ l.descricao_placas }}</span>{% endif %}</td>
+          <td class="rel-num">{{ l.valor|moeda if l.valor is not none else '—' }}</td>
+          <td>{{ pagamentos_rotulo.get(l.pagamento_situacao, 'Sem cobrança') }}{% if l.data_confirmacao %}<span class="secundario">{{ l.data_confirmacao|data_hora }}</span>{% endif %}</td></tr>
+        {% else %}
+        <tr><td colspan="6" class="vazio">Nenhum pedido com estes filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+  {% if excedeu %}<div class="rodape-tabela"><span>Mostrando os {{ limite_tela }} pedidos mais recentes. Use a exportação CSV para ver todos.</span></div>{% endif %}
+</section>
+{% endblock %}

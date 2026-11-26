@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo, paginacao %}
+{% block titulo %}{{ item.modelo }} · Estoque{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('estoque.static', filename='estoque.css') }}">
+<p class="est-trilha"><a href="{{ url_for('estoque.index') }}">Estoque</a> / {{ item.modelo }}</p>
+{% call cabecalho(item.modelo, 'Movimentações e nível mínimo deste modelo') %}
+  <a class="btn btn--sec" href="{{ url_for('estoque.index') }}">Voltar</a>
+{% endcall %}
+
+<div class="est-resumo">
+  <div class="est-cartao est-cartao--{{ selo_estoque.get(item.estado, 'info') }}"><small>Saldo atual</small><strong>{{ item.quantidade }}</strong></div>
+  <div class="est-cartao est-cartao--info"><small>Nível mínimo</small><strong>{{ item.nivel_minimo }}</strong></div>
+  <div class="est-cartao est-cartao--info"><small>Em pedidos abertos</small><strong>{{ item.em_pedidos }}</strong></div>
+  <div class="est-cartao est-cartao--{{ selo_estoque.get(item.estado, 'info') }}"><small>Situação</small><strong style="font-size:1.2rem">{{ estados.get(item.estado, item.estado) }}</strong></div>
+</div>
+
+{% for a in avisos %}
+<div class="aviso aviso--{{ 'erro' if a.tipo == 'ESTOQUE_ESGOTADO' else 'info' }}">Aviso de {{ a.data|data_hora }}: {{ a.mensagem }}</div>
+{% endfor %}
+
+<div class="est-colunas">
+  <section class="cartao" aria-labelledby="titulo-mov">
+    <h2 class="secao-titulo" id="titulo-mov">Registrar movimentação</h2>
+    <form method="post" action="{{ url_for('estoque.movimentar', item_id=item.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="campo">
+        <label for="tipo">Tipo <span class="req" aria-hidden="true">*</span></label>
+        <select id="tipo" name="tipo" required>
+          {% for valor, rotulo in tipos_manuais.items() %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
+        </select>
+        <p class="ajuda">Entrada: compra ou recebimento. Ajustes: correção após contagem física. A saída de placas acontece na finalização do pedido.</p>
+      </div>
+      <div class="campo">
+        <label for="quantidade">Quantidade <span class="req" aria-hidden="true">*</span></label>
+        <input id="quantidade" name="quantidade" type="number" min="1" max="{{ qtd_maxima }}" step="1" required>
+      </div>
+      <div><button class="btn btn--pri" type="submit">Registrar</button></div>
+    </form>
+  </section>
+  <section class="cartao" aria-labelledby="titulo-min">
+    <h2 class="secao-titulo" id="titulo-min">Nível mínimo</h2>
+    <form method="post" action="{{ url_for('estoque.minimo', item_id=item.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="campo">
+        <label for="nivel_minimo">Avisar quando o saldo chegar a <span class="req" aria-hidden="true">*</span></label>
+        <input id="nivel_minimo" name="nivel_minimo" type="number" min="0" max="{{ qtd_maxima }}" step="1" value="{{ item.nivel_minimo }}" required>
+        <p class="ajuda">Com saldo igual ou menor que este número, o modelo aparece como "No nível mínimo" e gera aviso.</p>
+      </div>
+      <div><button class="btn btn--sec" type="submit">Salvar nível mínimo</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="cartao cartao--tabela">
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <caption class="pular">Histórico de movimentações</caption>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Pedido</th></tr></thead>
+      <tbody>
+        {% for m in movimentacoes %}
+        {% set entrada = m.tipo in ('ENTRADA', 'AJUSTE_ENTRADA') %}
+        <tr>
+          <td class="nowrap">{{ m.data|data_hora }}</td>
+          <td>{{ selo(movimentacoes_rotulo.get(m.tipo, m.tipo), 'ok' if entrada else 'alerta') }}</td>
+          <td><strong>{{ '+' if entrada else '−' }}{{ m.quantidade }}</strong></td>
+          <td>{% if m.pedido_numero %}<a href="{{ url_for('pagamentos.pedido', numero=m.pedido_numero) }}">Nº {{ m.pedido_numero }}</a>{% else %}—{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="vazio">Nenhuma movimentação registrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rodape-tabela"><span>{{ total }} movimentaç{{ 'ão' if total == 1 else 'ões' }}</span>{{ paginacao(pagina, paginas, 'estoque.item', {'item_id': item.id}) }}</div>
+</section>
+{% endblock %}

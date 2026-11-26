@@ -1,0 +1,25 @@
+/* Painel (UC12) - complementa app.css sem alterar classes globais. */
+.pn-cartoes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.pn-cartao { display: block; text-decoration: none; color: inherit; background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); padding: 18px 20px; border-top: 4px solid var(--borda-forte); transition: transform .15s, box-shadow .15s; }
+.pn-cartao:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(16,42,67,.08), 0 12px 28px rgba(16,42,67,.08); }
+.pn-cartao:focus-visible { outline: 3px solid rgba(43, 108, 224, .45); outline-offset: 2px; }
+.pn-cartao--ok { border-top-color: var(--ok); }
+.pn-cartao--alerta { border-top-color: #d99a00; }
+.pn-cartao--erro { border-top-color: var(--erro); }
+.pn-cartao--info { border-top-color: var(--acento); }
+.pn-cartao--neutro { border-top-color: #8a97a6; }
+.pn-cartao small { display: block; color: var(--suave); font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.pn-cartao strong { display: block; font-size: 2rem; font-weight: 800; color: var(--azul-900); line-height: 1.2; margin-top: 4px; }
+.pn-colunas { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+.pn-colunas > .cartao { min-width: 0; }
+.pn-titulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.pn-titulo .secao-titulo { margin: 0; }
+.pn-avisos { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pn-aviso { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 12px 14px; border: 1px solid var(--borda); border-radius: 12px; }
+.pn-aviso--lido { opacity: .65; }
+.pn-aviso p { margin: 4px 0 0; font-size: .92rem; }
+.pn-aviso form { margin: 0; flex: 0 0 auto; }
+.pn-estoque { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+@media (max-width: 1100px) { .pn-cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 960px) { .pn-colunas { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .pn-cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

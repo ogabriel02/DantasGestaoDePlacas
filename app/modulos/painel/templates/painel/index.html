@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cabecalho, selo %}
+{% block titulo %}Painel{% endblock %}
+{% block conteudo %}
+<link rel="stylesheet" href="{{ url_for('painel.static', filename='painel.css') }}">
+{% call cabecalho('Painel', 'Olá, ' ~ usuario.nome.split()[0] ~ '. ' ~ abertos ~ ' pedido' ~ ('' if abertos == 1 else 's') ~ ' em andamento.') %}
+  {% if usuario.perfil == 'ADMINISTRADOR' %}
+  <form method="post" action="{{ url_for('painel.gerar_avisos') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn--sec" type="submit">Gerar avisos agora</button>
+  </form>
+  {% endif %}
+{% endcall %}
+
+<nav class="pn-cartoes" aria-label="Pedidos por situação">
+  {% for c in cartoes %}
+  <a class="pn-cartao pn-cartao--{{ c.tipo }}" href="{{ url_for('pagamentos.index', situacao=c.situacao) }}">
+    <small>{{ c.rotulo }}</small><strong>{{ c.total }}</strong>
+  </a>
+  {% endfor %}
+</nav>
+
+{% if estoque is not none %}
+<section class="cartao pn-estoque" aria-label="Situação do estoque">
+  <strong>Estoque:</strong>
+  {% for estado, rotulo in estados.items() %}
+    {{ selo(rotulo ~ ': ' ~ estoque.get(estado, 0) ~ ' modelo' ~ ('' if estoque.get(estado, 0) == 1 else 's'), {'DISPONIVEL': 'ok', 'NIVEL_MINIMO': 'alerta', 'ESGOTADO': 'erro'}[estado]) }}
+  {% endfor %}
+  <a class="btn btn--sec btn--sm" href="{{ url_for('estoque.index') }}">Abrir estoque</a>
+</section>
+{% endif %}
+
+<div class="pn-colunas">
+  <section class="cartao" aria-labelledby="titulo-avisos">
+    <div class="pn-titulo">
+      <h2 class="secao-titulo" id="titulo-avisos">{{ 'Avisos recentes' if todos else 'Avisos não lidos' }} ({{ avisos|length }})</h2>
+      {% if todos %}<a class="btn btn--sec btn--sm" href="{{ url_for('painel.index') }}">Só não lidos</a>
+      {% else %}<a class="btn btn--sec btn--sm" href="{{ url_for('painel.index', avisos='todos') }}">Ver também os lidos</a>{% endif %}
+    </div>
+    <ul class="pn-avisos">
+      {% for a in avisos %}
+      <li class="pn-aviso{% if a.lido %} pn-aviso--lido{% endif %}">
+        <div>
+          {{ selo(tipos_aviso.get(a.tipo, a.tipo), selo_aviso.get(a.tipo, 'neutro')) }}
+          <span class="secundario" style="display:inline">{{ a.data|data_hora }}</span>
+          <p>{{ a.mensagem }}</p>
+          <span class="secundario">
+            {% if a.pedido_numero %}<a href="{{ url_for('pagamentos.pedido', numero=a.pedido_numero) }}">Pedido Nº {{ a.pedido_numero }}</a> · situação atual: {{ situacoes.get(a.pedido_situacao, a.pedido_situacao) }}
+            {% elif a.item_estoque_id %}<a href="{{ url_for('estoque.item', item_id=a.item_estoque_id) }}">{{ a.modelo }}</a>{% endif %}
+            {% if a.lido %} · lido em {{ a.lido_em|data_hora }}{% endif %}
+          </span>
+        </div>
+        {% if not a.lido %}
+        <form method="post" action="{{ url_for('painel.marcar_lido', aviso_id=a.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn--sec btn--sm" type="submit">Marcar como lido</button>
+        </form>
+        {% endif %}
+      </li>
+      {% else %}
+      <li class="vazio">Nenhum aviso {{ '' if todos else 'pendente' }}.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="cartao cartao--tabela" aria-labelledby="titulo-parados">
+    <div class="pn-titulo" style="padding:20px 20px 0">
+      <h2 class="secao-titulo" id="titulo-parados">Pedidos parados ({{ parados|length }})</h2>
+    </div>
+    <p class="ajuda" style="padding:0 20px 12px">Em aberto e sem atualização há mais de {{ dias }} dia{{ '' if dias == 1 else 's' }}.</p>
+    <div class="tabela-wrap">
+      <table class="tabela" style="min-width:0">
+        <thead><tr><th>Pedido</th><th>Situação</th><th>Parado há</th></tr></thead>
+        <tbody>
+          {% for p in parados %}
+          <tr>
+            <td><a href="{{ url_for('pagamentos.pedido', numero=p.numero) }}"><strong>Nº {{ p.numero }}</strong></a><span class="secundario">{{ p.cliente_nome }}</span></td>
+            <td>{{ selo(situacoes.get(p.situacao, p.situacao), selo_situacao.get(p.situacao, 'neutro')) }}</td>
+            <td class="nowrap">{{ p.dias }} dia{{ '' if p.dias == 1 else 's' }}{% if not p.avisado %}<span class="secundario">sem aviso aberto</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="vazio">Nenhum pedido parado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
